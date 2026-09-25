@@ -92,6 +92,35 @@ jobs:
           grep -q 'we-wolf-god-pwa-alpha-0.3-v1' _site/sw.js
           grep -q "'./js/identity-first-night.js'" _site/sw.js
 
+      - name: Apply PWA Alpha 0.3.1 night status tags
+        shell: bash
+        run: |
+          cp runtime/status-tags-031.js _site/js/status-tags.js
+
+          # Load status compatibility after first-night identity flow.
+          sed -i 's#<script src="js/identity-first-night.js?v=0.3"></script><script type="module" src="js/cloud-sync.js?v=0.2.1"></script>#<script src="js/identity-first-night.js?v=0.3"></script><script src="js/status-tags.js?v=0.3.1"></script><script type="module" src="js/cloud-sync.js?v=0.2.1"></script>#' _site/game.html
+
+          # Visible version labels.
+          sed -i 's#PWA ALPHA 0.3#PWA ALPHA 0.3.1#g' _site/index.html
+          sed -i 's#PWA Alpha 0.3#PWA Alpha 0.3.1#g' _site/game.html
+
+          # Cache the compatibility runtime and force installed clients to refresh.
+          sed -i "s#'./js/identity-first-night.js','./js/cloud-sync.js'#'./js/identity-first-night.js','./js/status-tags.js','./js/cloud-sync.js'#" _site/sw.js
+          sed -i "s#we-wolf-god-pwa-alpha-0.3-v1#we-wolf-god-pwa-alpha-0.3.1-v1#g" _site/sw.js
+
+          cat > _site/pwa-version.json <<'JSON'
+          {"name":"WE狼殺上帝","channel":"PWA","version":"0.3.1","features":["standalone","cloud-controller","pc-mirror","rex-voice-end-ack","public-display","first-night-identity-discovery","night-action-status-tags","session-isolation"]}
+          JSON
+
+          # Static verification.
+          node --check _site/js/status-tags.js
+          grep -q 'PWA ALPHA 0.3.1' _site/index.html
+          grep -q 'PWA Alpha 0.3.1' _site/game.html
+          grep -q 'js/status-tags.js?v=0.3.1' _site/game.html
+          grep -q 'WEWG-STATUS-TAGS-0.3.1' _site/js/status-tags.js
+          grep -q 'we-wolf-god-pwa-alpha-0.3.1-v1' _site/sw.js
+          grep -q "'./js/status-tags.js'" _site/sw.js
+
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
