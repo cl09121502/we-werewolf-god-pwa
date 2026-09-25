@@ -51,7 +51,16 @@ jobs:
       - name: Apply PWA Alpha 0.3 first-night identity flow
         shell: bash
         run: |
-          cat runtime/identity_03_part00.b64 runtime/identity_03_part01.b64 runtime/identity_03_part02.b64 > identity_03.b64
+          python - <<'PY'
+          from pathlib import Path
+          p = Path("runtime/identity_03_part01.b64")
+          s = p.read_text()
+          assert len(s) == 12000
+          assert s[7012] == "z"
+          s = s[:7012] + "j" + s[7013:]
+          Path("identity_03_part01.fixed.b64").write_text(s)
+          PY
+          cat runtime/identity_03_part00.b64 identity_03_part01.fixed.b64 runtime/identity_03_part02.b64 > identity_03.b64
           base64 --decode identity_03.b64 > _site/js/identity-first-night.js
           echo "ec6c705664ac6d0cd0025947a53e0d58fb74932f785f656c7481536a18aab217  _site/js/identity-first-night.js" | sha256sum -c -
 
