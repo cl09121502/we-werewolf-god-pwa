@@ -1,0 +1,48 @@
+name: Deploy WE狼殺上帝 PWA
+
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Rebuild PWA package
+        shell: bash
+        run: |
+          mkdir -p _site
+          cat pwa_payload/part*.b64 > pwa.zip.b64
+          base64 --decode pwa.zip.b64 > pwa.zip
+          unzip -q pwa.zip -d _site
+          test -f _site/index.html
+          test -f _site/sw.js
+          test -f _site/manifest.webmanifest
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: _site
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
