@@ -4,7 +4,7 @@
  */
 (()=>{
   'use strict';
-  const PATCH='WEWG-COMPETITION-1018-0.4';
+  const PATCH='WEWG-COMPETITION-1018-0.4.1';
   if(typeof RE==='undefined'||typeof game==='undefined'||typeof bindings==='undefined'){
     console.warn(PATCH,'runtime not ready');return;
   }
@@ -152,7 +152,7 @@
     if(currentProfile(game)==='nightmare'){
       return Number(game.night)===1
         ?'除夢魘外，其餘狼人請睜眼。請選擇今晚擊殺的玩家。'
-        :'狼人請睜眼。請選擇今晚擊殺的玩家。';
+        :'狼人請睜眼。夢魘從第二夜開始與狼隊一同睜眼見面。請選擇今晚擊殺的玩家。';
     }
     return oldWolfStartVoice();
   };
@@ -249,6 +249,6 @@
   recordAction=function(){const st=currentStep(),out=oldUiRecord();if(st?.id==='mech_skill_check'&&game.special.mechanicalLastCheckNight===Number(game.night)){const n=game.special.mechanicalLastCheckSeat,r=game.special.mechanicalLastCheckRole;toast(`機械狼查驗：${n}號＝${roleLabel(r)}`);}return out;};
   if($('#confirmAction'))$('#confirmAction').onclick=recordAction;
 
-  window.WEWG_COMPETITION_1018={version:'0.4',rebuildStatus:rebuildStatus1018,randomizeRoles};
+  window.WEWG_COMPETITION_1018={version:'0.4.1',rebuildStatus:rebuildStatus1018,randomizeRoles};
   console.info(PATCH,'loaded');
 })();
