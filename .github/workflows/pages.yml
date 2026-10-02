@@ -156,6 +156,42 @@ jobs:
           grep -q 'we-wolf-god-pwa-alpha-0.4-v1' _site/sw.js
           grep -q "'./js/competition-1018.js'" _site/sw.js
 
+      - name: Apply PWA Alpha 0.4.1 cache and nightmare fix
+        shell: bash
+        run: |
+          cp runtime/pwa-041.js _site/js/pwa.js
+          cp runtime/app-1018.js _site/js/app.js
+          cp runtime/competition-1018.js _site/js/competition-1018.js
+
+          # Force fresh homepage/module URLs so installed PWA clients cannot keep the 0.2 scripts.
+          sed -i 's#js/pwa.js?v=0.2.0#js/pwa.js?v=0.4.1#g' _site/index.html
+          sed -i 's#js/app.js?v=0.2.0#js/app.js?v=0.4.1#g' _site/index.html
+          sed -i 's#js/competition-1018.js?v=0.4#js/competition-1018.js?v=0.4.1#g' _site/game.html
+
+          # Make session management obvious on the homepage.
+          sed -i 's#<h2>最近賽事</h2><div id="sessions"></div>#<h2>場次管理｜最近賽事</h2><p class="small">可開啟、個別刪除，或清除全部測試場次。</p><div id="sessions"></div>#' _site/index.html
+
+          # Version/cache bump.
+          sed -i 's#PWA ALPHA 0.4#PWA ALPHA 0.4.1#g' _site/index.html
+          sed -i 's#PWA Alpha 0.4#PWA Alpha 0.4.1#g' _site/game.html
+          sed -i "s#we-wolf-god-pwa-alpha-0.4-v1#we-wolf-god-pwa-alpha-0.4.1-v1#g" _site/sw.js
+
+          cat > _site/pwa-version.json <<'JSON'
+          {"name":"WE狼殺上帝","channel":"PWA","version":"0.4.1","build":"1018-competition-hotfix","features":["nightmare-night2-wolf-meet","session-delete-visible","forced-pwa-refresh","standalone","cloud-controller","pc-mirror","random-private-role-distribution","night-action-status-tags","mechanical-psychic-competition-flow","nightmare-dreamer-competition-flow"]}
+          JSON
+
+          node --check _site/js/pwa.js
+          node --check _site/js/app.js
+          node --check _site/js/competition-1018.js
+          grep -q 'PWA ALPHA 0.4.1' _site/index.html
+          grep -q '場次管理｜最近賽事' _site/index.html
+          grep -q 'js/app.js?v=0.4.1' _site/index.html
+          grep -q 'js/pwa.js?v=0.4.1' _site/index.html
+          grep -q 'js/competition-1018.js?v=0.4.1' _site/game.html
+          grep -q '刪除此場次' _site/js/app.js
+          grep -q '夢魘從第二夜開始與狼隊一同睜眼見面' _site/js/competition-1018.js
+          grep -q 'we-wolf-god-pwa-alpha-0.4.1-v1' _site/sw.js
+
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
