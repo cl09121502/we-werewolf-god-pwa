@@ -4,7 +4,7 @@
  */
 (()=>{
   'use strict';
-  const PATCH='WEWG-COMPETITION-1018-0.4.1';
+  const PATCH='WEWG-COMPETITION-1018-0.4.2';
   if(typeof RE==='undefined'||typeof game==='undefined'||typeof bindings==='undefined'){
     console.warn(PATCH,'runtime not ready');return;
   }
@@ -53,10 +53,12 @@
         if(s.seats.some(x=>x.alive&&x.role==='hunter'))a.push('hunter');
         a.push('psychic_choose','psychic_result','mech_result');
       }else{
-        const m=mechSkillStep1018(s);if(m)a.push(m);
+        // Competition sequence: show knife hand signal, resolve night roles, then use copied skill.
         a.push('mech_pack');
         if(s.seats.some(x=>x.alive&&x.role==='guard'))a.push('guard');
         a.push('wolf','witch_cure','witch_poison','psychic');
+        a.push(mechSkillStep1018(s)||'mech_skill_prompt');
+        if(s.seats.some(x=>x.role==='hunter'))a.push('hunter');
       }
       a.push('dawn');return a;
     }
@@ -133,16 +135,18 @@
   stepFromKey=function(key){
     let s=oldStepFromKey(key);const sp=game.special||{},copied=sp.mechanicalCopiedRole;
     if(key==='mech_result'){
-      s={...s,title:'機械狼｜學習結果',start:'機械狼請睜眼。上帝請以手勢告知機械狼學到的技能。',end:'機械狼確認，請閉眼。',note:`上帝提示：模仿身份【${roleLabel(copied)}】｜技能【${copiedSkillName(copied)}】`};
+      s={...s,title:'機械狼｜學習結果',start:'機械狼請睜眼。你學到的身份是——',end:'機械狼確認，請閉眼。',note:`上帝提示：模仿身份【${roleLabel(copied)}】｜技能【${copiedSkillName(copied)}】`};
     }else if(key==='mech_pack'){
-      s={...s,title:'機械狼｜帶刀手勢',start:'機械狼請睜眼。上帝請以手勢提示目前帶刀狀態。',note:`上帝提示：機械狼學到【${roleLabel(copied)}】｜${copiedSkillName(copied)}。本夜順序：技能 → 手勢。`};
+      s={...s,title:'機械狼｜帶刀手勢',start:'機械狼請睜眼。這是你的帶刀手勢。',note:`上帝提示：機械狼學到【${roleLabel(copied)}】｜${copiedSkillName(copied)}。本夜順序：技能 → 手勢。`};
+    }else if(key==='mech_skill_prompt'){
+      s={...s,id:key,actor:'機械狼',title:'機械狼｜是否使用技能',start:'機械狼請睜眼。請問是否發動技能？',end:'機械狼確認，請閉眼。',target:'none',actions:[],timer:0,note:`上帝提示：學到【${roleLabel(copied)}】｜${copiedSkillName(copied)}。本夜若無可主動使用的技能，直接進入獵人步驟。`};
     }else if(key==='mech_skill_check'){
       const a=latest(game,'mech_skill_check'),rr=(a&&sp.mechanicalLastCheckNight===Number(game.night))?sp.mechanicalLastCheckRole:'';
       s={...s,title:'機械狼｜通靈查驗',start:'機械狼請睜眼。請使用你學到的查驗技能。',note:`上帝提示：學到【${roleLabel(copied)}】。${rr?`查驗結果：${a.effectiveTargets?.[0]}號＝【${roleLabel(rr)}】`:'查驗後會顯示具體身份。'}`};
     }else if(key==='mech_skill_guard'){
       s={...s,title:'機械狼｜守護技能',start:'機械狼請睜眼。請使用你學到的守護技能。',actions:['守護','不使用'],note:'上帝提示：學到【守衛】。每晚可守護；不可連續兩晚守同一人。'};
     }else if(key==='mech_skill_poison'){
-      s={...s,title:'機械狼｜毒藥技能',start:'機械狼請睜眼。請確認是否使用你學到的毒藥。',note:'上帝提示：學到【女巫】。只有一瓶毒藥，使用後整局不可再用。'};
+      s={...s,title:'機械狼｜毒藥技能',start:'機械狼請睜眼。請使用你學到的毒藥技能。',note:'上帝提示：學到【女巫】。只有一瓶毒藥，使用後整局不可再用。'};
     }
     return s;
   };
@@ -151,8 +155,8 @@
   wolfStartVoice=function(){
     if(currentProfile(game)==='nightmare'){
       return Number(game.night)===1
-        ?'除夢魘外，其餘狼人請睜眼。請選擇今晚擊殺的玩家。'
-        :'狼人請睜眼。夢魘從第二夜開始與狼隊一同睜眼見面。請選擇今晚擊殺的玩家。';
+        ?'狼人請睜眼。請選擇今晚擊殺的玩家。'
+        :'狼人請睜眼。請選擇今晚擊殺的玩家。';
     }
     return oldWolfStartVoice();
   };
@@ -249,6 +253,6 @@
   recordAction=function(){const st=currentStep(),out=oldUiRecord();if(st?.id==='mech_skill_check'&&game.special.mechanicalLastCheckNight===Number(game.night)){const n=game.special.mechanicalLastCheckSeat,r=game.special.mechanicalLastCheckRole;toast(`機械狼查驗：${n}號＝${roleLabel(r)}`);}return out;};
   if($('#confirmAction'))$('#confirmAction').onclick=recordAction;
 
-  window.WEWG_COMPETITION_1018={version:'0.4.1',rebuildStatus:rebuildStatus1018,randomizeRoles};
+  window.WEWG_COMPETITION_1018={version:'0.4.2',rebuildStatus:rebuildStatus1018,randomizeRoles};
   console.info(PATCH,'loaded');
 })();
