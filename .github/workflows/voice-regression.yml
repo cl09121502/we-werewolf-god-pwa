@@ -1,0 +1,44 @@
+name: Verify 10-18 Werewolf Voice and Flow
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Rebuild base and apply source-level checks
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p _site
+          cat pwa_payload/part00.b64 pwa_payload/fix01a.b64 pwa_payload/fix01b_a.b64 pwa_payload/fix01b_b.b64 pwa_payload/part02.b64 pwa_payload/part03.b64 pwa_payload/part04.b64 pwa_payload/part05.b64 pwa_payload/part06.b64 pwa_payload/part07.b64 > pwa.zip.b64
+          base64 --decode pwa.zip.b64 > pwa.zip
+          echo "d33edd1dd1436abf779486cb9274361a5b410ddb064a95329fde5412021aa178  pwa.zip" | sha256sum -c -
+          unzip -q pwa.zip -d _site
+          cat pwa_patch/part00.b64 pwa_patch/part01.b64 > patch.zip.b64
+          base64 --decode patch.zip.b64 > patch.zip
+          echo "b3a9aaf11928dcfa5434798acef8cc22afb547fd622299bd12aa20f414548c33  patch.zip" | sha256sum -c -
+          unzip -qo patch.zip -d _site
+          python3 - <<'PY'
+          from pathlib import Path
+          s=Path('runtime/identity_03_part01.b64').read_text()
+          assert len(s)==12000 and s[7012]=='z'
+          Path('identity_03_part01.fixed.b64').write_text(s[:7012]+'j'+s[7013:])
+          PY
+          cat runtime/identity_03_part00.b64 identity_03_part01.fixed.b64 runtime/identity_03_part02.b64 > identity_03.b64
+          base64 --decode identity_03.b64 > _site/js/identity-first-night.js
+          echo "ec6c705664ac6d0cd0025947a53e0d58fb74932f785f656c7481536a18aab217  _site/js/identity-first-night.js" | sha256sum -c -
+          cp runtime/status-tags-031.js _site/js/status-tags.js
+          cp runtime/competition-1018.js _site/js/competition-1018.js
+          node runtime/fix-voice-042.cjs _site
+          node --check _site/js/competition-1018.js
+          node --check _site/js/identity-first-night.js
+          node --check _site/js/status-tags.js
+          node runtime/verify-voice-042.cjs _site
