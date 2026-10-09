@@ -189,8 +189,27 @@ jobs:
           grep -q 'js/pwa.js?v=0.4.1' _site/index.html
           grep -q 'js/competition-1018.js?v=0.4.1' _site/game.html
           grep -q '刪除此場次' _site/js/app.js
-          grep -q '夢魘從第二夜開始與狼隊一同睜眼見面' _site/js/competition-1018.js
+          grep -q '狼人請睜眼。請選擇今晚擊殺的玩家。' _site/js/competition-1018.js
           grep -q 'we-wolf-god-pwa-alpha-0.4.1-v1' _site/sw.js
+
+      - name: Rebuild verified 10/18 voice and day-selection corrections
+        shell: bash
+        run: |
+          node runtime/fix-voice-042.cjs _site
+          sed -i 's#PWA ALPHA 0.4.1#PWA ALPHA 0.4.2#g' _site/index.html
+          sed -i 's#PWA Alpha 0.4.1#PWA Alpha 0.4.2#g' _site/game.html
+          sed -i 's#js/competition-1018.js?v=0.4.1#js/competition-1018.js?v=0.4.2#g' _site/game.html
+          sed -i 's#js/app.js?v=0.4.1#js/app.js?v=0.4.2#g' _site/index.html
+          sed -i 's#js/pwa.js?v=0.4.1#js/pwa.js?v=0.4.2#g' _site/index.html
+          sed -i 's#we-wolf-god-pwa-alpha-0.4.1-v1#we-wolf-god-pwa-alpha-0.4.2-v1#g' _site/sw.js
+          sed -i 's#PWA-ALPHA-0.4.1#PWA-ALPHA-0.4.2#g' _site/js/pwa.js
+          sed -i 's#sw.js?v=0.4.1#sw.js?v=0.4.2#g' _site/js/pwa.js
+          node -e "const fs=require('fs'),vm=require('vm');const html=fs.readFileSync('_site/game.html','utf8');for(const m of html.matchAll(/<script(?:[^>]*)>([\\s\\S]*?)<\\/script>/g))if(m[1].trim())new vm.Script(m[1]);"
+          node --check _site/js/competition-1018.js
+          node runtime/verify-voice-042.cjs _site
+          cat > _site/pwa-version.json <<'JSON'
+          {"name":"WE狼殺上帝","channel":"PWA","version":"0.4.2","build":"1018-voice-day-vote-validation","features":["mechanical-night-two-order","first-night-mechanical-result-audio","single-channel-audio","sheriff-blue-light","vote-number-preservation","session-delete","night-action-status-tags"]}
+          JSON
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
