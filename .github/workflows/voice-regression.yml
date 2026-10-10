@@ -42,3 +42,17 @@ jobs:
           node --check _site/js/identity-first-night.js
           node --check _site/js/status-tags.js
           node runtime/verify-voice-042.cjs _site
+          cp runtime/status-engine-043.js _site/js/status-engine-043.js
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('_site/game.html')
+          s=p.read_text()
+          needle='</body></html>'
+          assert s.count(needle)==1
+          s=s.replace(needle,'<script src="js/status-tags.js?v=0.3.1"></script><script src="js/competition-1018.js?v=0.4.2"></script>'+needle)
+          p.write_text(s)
+          PY
+          node runtime/integrate-043.cjs _site
+          node --check _site/js/status-engine-043.js
+          node --check _site/js/competition-1018.js
+          node runtime/verify-043.cjs _site
