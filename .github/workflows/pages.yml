@@ -243,6 +243,29 @@ jobs:
           {"name":"WE狼殺上帝","channel":"PWA","version":"0.4.3","build":"1018-status-and-generic-mechanical-voice","features":["authoritative-night-status","mechanical-copy-target-and-role-status","night-action-tags","generic-mechanical-skill-voice","sheriff-3-second-light-instruction","voice-source-consistency-diagnostics","session-delete"]}
           JSON
 
+      - name: Repair Alpha 0.4.4 victory voice and checked player status
+        shell: bash
+        run: |
+          set -euo pipefail
+          node runtime/fix-victory-044.cjs _site
+          node runtime/verify-044.cjs _site
+          sed -i 's#PWA ALPHA 0.4.3#PWA ALPHA 0.4.4#g' _site/index.html
+          sed -i 's#PWA Alpha 0.4.3#PWA Alpha 0.4.4#g' _site/game.html
+          sed -i 's#js/status-engine-043.js?v=0.4.3#js/status-engine-043.js?v=0.4.4#g' _site/game.html
+          sed -i 's#js/app.js?v=0.4.3#js/app.js?v=0.4.4#g' _site/index.html
+          sed -i 's#js/pwa.js?v=0.4.3#js/pwa.js?v=0.4.4#g' _site/index.html
+          sed -i 's#we-wolf-god-pwa-alpha-0.4.3-v1#we-wolf-god-pwa-alpha-0.4.4-v1#g' _site/sw.js
+          sed -i 's#PWA-ALPHA-0.4.3#PWA-ALPHA-0.4.4#g' _site/js/pwa.js
+          sed -i 's#sw.js?v=0.4.3#sw.js?v=0.4.4#g' _site/js/pwa.js
+          sed -i 's#WE_SW_RELOAD_041#WE_SW_RELOAD_044#g' _site/js/pwa.js
+          node --check _site/js/status-engine-043.js
+          node runtime/verify-044.cjs _site
+          grep -q 'js/status-engine-043.js?v=0.4.4' _site/game.html
+          grep -q 'we-wolf-god-pwa-alpha-0.4.4-v1' _site/sw.js
+          cat > _site/pwa-version.json <<'JSON'
+          {"name":"WE狼殺上帝","channel":"PWA","version":"0.4.4","build":"1018-victory-checked-regressions","features":["win-voice-never-repeats-exile","good-wolf-rex-victory-clip-verification","checked-player-status","first-and-later-night-psychic-check","unified-night-status","session-delete"]}
+          JSON
+
       - name: Setup Pages
         uses: actions/configure-pages@v5
 

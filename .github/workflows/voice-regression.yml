@@ -56,3 +56,6 @@ jobs:
           node --check _site/js/status-engine-043.js
           node --check _site/js/competition-1018.js
           node runtime/verify-043.cjs _site
+          node runtime/fix-victory-044.cjs _site
+          node --check _site/js/status-engine-043.js
+          node runtime/verify-044.cjs _site

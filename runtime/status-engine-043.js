@@ -8,7 +8,7 @@
   root.WEWGStatus=api;
 })(typeof globalThis!=='undefined'?globalThis:this,function(){
   'use strict';
-  const MANAGED=/^(?:被刀|被毒|被守|被救|被獵殺|被攝夢|夢遊保護|連攝出局|夢鏈出局|被恐懼|狼刀封印|解藥無效|毒藥無效|被魅惑|被交換|機械守護|可開槍|不可開槍|被機械狼模仿|機械狼模仿：|機械狼查驗：)/;
+  const MANAGED=/^(?:被刀|被毒|被守|被救|被獵殺|被攝夢|夢遊保護|連攝出局|夢鏈出局|被恐懼|狼刀封印|解藥無效|毒藥無效|被魅惑|被交換|機械守護|可開槍|不可開槍|被機械狼模仿|機械狼模仿：|機械狼查驗：|被查驗)/;
   const targets=a=>{
     const from=Array.isArray(a?.effectiveTargets)&&a.effectiveTargets.length?a.effectiveTargets:a?.targets;
     return(Array.isArray(from)?from:[]).map(Number).filter(n=>Number.isSafeInteger(n)&&n>0);
@@ -26,6 +26,9 @@
       if(!valid(a))continue;
       const ns=targets(a),n=ns[0];
       switch(a.step){
+        // All confirmed identification skills mark the selected target. Results stay on God's screen.
+        case 'psychic_choose':case 'psychic':case 'seer':case 'mech_skill_check':case 'gargoyle_choose':case 'lucky_check':
+          if(a.action==='查驗'&&n)put(n,'被查驗');break;
         case 'wolf':case 'mech_skill_knife':case 'young_awake':case 'gargoyle_knife':case 'bloodmoon_last_knife':if(n)put(n,'被刀');break;
         case 'guard':if(n)put(n,'被守');break;
         case 'mech_skill_guard':if(n){put(n,'被守');put(n,'機械守護')}break;
