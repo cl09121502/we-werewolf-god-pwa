@@ -4,7 +4,7 @@
  */
 (()=>{
   'use strict';
-  const PATCH='WEWG-COMPETITION-1018-0.4.2';
+  const PATCH='WEWG-COMPETITION-1018-0.4.3';
   if(typeof RE==='undefined'||typeof game==='undefined'||typeof bindings==='undefined'){
     console.warn(PATCH,'runtime not ready');return;
   }
@@ -142,11 +142,13 @@
       s={...s,id:key,actor:'機械狼',title:'機械狼｜是否使用技能',start:'機械狼請睜眼。請問是否發動技能？',end:'機械狼確認，請閉眼。',target:'none',actions:[],timer:0,note:`上帝提示：學到【${roleLabel(copied)}】｜${copiedSkillName(copied)}。本夜若無可主動使用的技能，直接進入獵人步驟。`};
     }else if(key==='mech_skill_check'){
       const a=latest(game,'mech_skill_check'),rr=(a&&sp.mechanicalLastCheckNight===Number(game.night))?sp.mechanicalLastCheckRole:'';
-      s={...s,title:'機械狼｜通靈查驗',start:'機械狼請睜眼。請使用你學到的查驗技能。',note:`上帝提示：學到【${roleLabel(copied)}】。${rr?`查驗結果：${a.effectiveTargets?.[0]}號＝【${roleLabel(rr)}】`:'查驗後會顯示具體身份。'}`};
+      s={...s,title:'機械狼｜通靈查驗',start:'機械狼請睜眼。請問是否發動技能？',note:`上帝提示：學到【${roleLabel(copied)}】。${rr?`查驗結果：${a.effectiveTargets?.[0]}號＝【${roleLabel(rr)}】`:'查驗後會顯示具體身份。'}`};
     }else if(key==='mech_skill_guard'){
-      s={...s,title:'機械狼｜守護技能',start:'機械狼請睜眼。請使用你學到的守護技能。',actions:['守護','不使用'],note:'上帝提示：學到【守衛】。每晚可守護；不可連續兩晚守同一人。'};
+      s={...s,title:'機械狼｜守護技能',start:'機械狼請睜眼。請問是否發動技能？',actions:['守護','不使用'],note:'上帝提示：學到【守衛】。每晚可守護；不可連續兩晚守同一人。'};
+    }else if(key==='mech_skill_knife'){
+      s={...s,title:'機械狼｜狼刀技能',start:'機械狼請睜眼。請問是否發動技能？',note:`上帝提示：學到【${roleLabel(copied)}】。只在上帝主控畫面顯示技能種類。`};
     }else if(key==='mech_skill_poison'){
-      s={...s,title:'機械狼｜毒藥技能',start:'機械狼請睜眼。請使用你學到的毒藥技能。',note:'上帝提示：學到【女巫】。只有一瓶毒藥，使用後整局不可再用。'};
+      s={...s,title:'機械狼｜毒藥技能',start:'機械狼請睜眼。請問是否發動技能？',note:'上帝提示：學到【女巫】。只有一瓶毒藥，使用後整局不可再用。'};
     }
     return s;
   };
@@ -161,45 +163,21 @@
     return oldWolfStartVoice();
   };
 
-  const managedTags=new Set(['被刀','被守','被救','被毒','被獵殺','被攝夢','夢遊保護','連攝出局','夢鏈出局','被恐懼','狼刀封印','解藥無效','毒藥無效','被魅惑','被交換','機械守護','可開槍','不可開槍']);
-  const put=(no,t)=>{const x=seat(game,no);if(x&&!x.tags.includes(t))x.tags.push(t)};
-  function rebuildStatus1018(){
-    if(!game?.active)return;RE.ensure(game);
-    for(const x of game.seats){x.tags=Array.isArray(x.tags)?x.tags.filter(t=>!managedTags.has(t)):[];}
-    const acts=(game.actions||[]).filter(a=>Number(a.night)===Number(game.night));
-    const eff=a=>Number(a?.effectiveTargets?.[0]||a?.targets?.[0]||0);
-    const dream=eff(latest(game,'dreamer'));const fear=eff(latest(game,'nightmare'));
-    const fearedSeat=seat(game,fear);const fearWolf=!!fearedSeat&&RE.isWolfRole(fearedSeat.role);
-    for(const a of acts){
-      if(!a||a.suppressed||/^不|^確認/.test(String(a.action||'')))continue;
-      const n=eff(a);
-      if(['wolf','young_awake','gargoyle_knife','mech_skill_knife','bloodmoon_last_knife'].includes(a.step)&&n){if(!(a.step==='wolf'&&fearWolf))put(n,'被刀');}
-      if(a.step==='guard'&&n)put(n,'被守');
-      if(a.step==='mech_skill_guard'&&n){put(n,'被守');put(n,'機械守護');}
-      if(['witch_poison','mech_skill_poison','lucky_poison'].includes(a.step)&&n)put(n,'被毒');
-      if(a.step==='demon_hunt'&&n)put(n,'被獵殺');
-      if(a.step==='dreamer'&&n){put(n,'被攝夢');put(n,'夢遊保護');}
-      if(a.step==='nightmare'&&n)put(n,'被恐懼');
-      if(a.step==='wolfbeauty'&&n)put(n,'被魅惑');
-      if(['magician','trickster'].includes(a.step))for(const z of (a.targets||[]))put(z,'被交換');
-    }
-    if(fearWolf){for(const x of game.seats.filter(x=>x.alive&&RE.isWolfRole(x.role)))put(x.no,'狼刀封印');}
-    const cure=latest(game,'witch_cure'),wolf=latest(game,'wolf'),poison=latest(game,'witch_poison');
-    if(cure?.action==='使用解藥'&&!cure.suppressed){const n=eff(wolf);if(n){put(n,'被救');if(dream===n)put(n,'解藥無效');}}
-    if(poison?.action==='使用毒藥'&&!poison.suppressed){const n=eff(poison);if(n&&dream===n)put(n,'毒藥無效');}
-    if(dream&&Number(game.special.lastDreamSeat)===dream)put(dream,'連攝出局');
-    const dreamer=game.seats.find(x=>x.role==='dreamer');const ds=new Set(RE.nightDeaths(game));if(dreamer&&ds.has(dreamer.no)&&dream)put(dream,'夢鏈出局');
-    for(const x of game.seats){
-      if(!x.alive&&(x.role==='hunter'||(x.role==='mechanical_wolf'&&game.special.mechanicalHunterGun)))put(x.no,RE.canShoot(game,x.no)?'可開槍':'不可開槍');
-    }
-  }
-  function redrawTagDom(){
-    const rows=$$('#playerRows .prow');
-    rows.forEach((row,i)=>{const x=game.seats[i],box=row.querySelector('.tags');if(!x||!box)return;box.innerHTML=`${game.sheriff===x.no&&!game.badgeTorn?'<span class="tag sheriff">警長</span>':''}${(x.tags||[]).map(t=>`<span class="tag ${/刀|毒|獵|恐|封印|出局|不可/.test(t)?'wolf':'goodt'}">${esc(t)}</span>`).join('')}`;});
-  }
+  // One authoritative status derivation, before drawing the player rows.
+  // No post-render patching, clearing, or rebuilding the DOM as in pre-0.4.3.
   const previousRenderPlayers=renderPlayers;
   renderPlayers=function(){
-    previousRenderPlayers();rebuildStatus1018();redrawTagDom();
+    if(sync.mode==='mirror'){
+      // Never show the God-only night-action labels in a remote mirror.
+      previousRenderPlayers();
+      $$('#playerRows .prow').forEach(row=>{
+        const tags=row.querySelector('.tags');
+        if(tags)tags.innerHTML='';
+      });
+      return;
+    }
+    WEWGStatus.apply(game,{isWolfRole:RE.isWolfRole,roleName});
+    previousRenderPlayers();
     if(game?.identityMode==='random_hidden'&&Number(game.night)===1&&currentStep()?.id!=='dawn'){
       $$('#playerRows .prow').forEach(row=>{const sp=row.querySelector('.pmeta span');if(sp)sp.textContent='隨機發放｜首夜流程中';});
     }
@@ -253,6 +231,6 @@
   recordAction=function(){const st=currentStep(),out=oldUiRecord();if(st?.id==='mech_skill_check'&&game.special.mechanicalLastCheckNight===Number(game.night)){const n=game.special.mechanicalLastCheckSeat,r=game.special.mechanicalLastCheckRole;toast(`機械狼查驗：${n}號＝${roleLabel(r)}`);}return out;};
   if($('#confirmAction'))$('#confirmAction').onclick=recordAction;
 
-  window.WEWG_COMPETITION_1018={version:'0.4.2',rebuildStatus:rebuildStatus1018,randomizeRoles};
+  window.WEWG_COMPETITION_1018={version:'0.4.3',rebuildStatus:rebuildStatus1018,randomizeRoles};
   console.info(PATCH,'loaded');
 })();
