@@ -211,6 +211,38 @@ jobs:
           {"name":"WE狼殺上帝","channel":"PWA","version":"0.4.2","build":"1018-voice-day-vote-validation","features":["mechanical-night-two-order","first-night-mechanical-result-audio","single-channel-audio","sheriff-blue-light","vote-number-preservation","session-delete","night-action-status-tags"]}
           JSON
 
+      - name: Integrate Alpha 0.4.3 single-source statuses and discrete voice cues
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp runtime/status-engine-043.js _site/js/status-engine-043.js
+          node runtime/integrate-043.cjs _site
+          # Cache new source and bump every affected client version.
+          sed -i 's#PWA ALPHA 0.4.2#PWA ALPHA 0.4.3#g' _site/index.html
+          sed -i 's#PWA Alpha 0.4.2#PWA Alpha 0.4.3#g' _site/game.html
+          sed -i 's#js/app.js?v=0.4.2#js/app.js?v=0.4.3#g' _site/index.html
+          sed -i 's#js/pwa.js?v=0.4.2#js/pwa.js?v=0.4.3#g' _site/index.html
+          sed -i 's#we-wolf-god-pwa-alpha-0.4.2-v1#we-wolf-god-pwa-alpha-0.4.3-v1#g' _site/sw.js
+          sed -i 's#PWA-ALPHA-0.4.2#PWA-ALPHA-0.4.3#g' _site/js/pwa.js
+          sed -i 's#sw.js?v=0.4.2#sw.js?v=0.4.3#g' _site/js/pwa.js
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('_site/sw.js')
+          s=p.read_text()
+          old="'./js/status-tags.js','./js/competition-1018.js'"
+          new="'./js/status-tags.js','./js/status-engine-043.js','./js/competition-1018.js'"
+          assert s.count(old)==1, 'PWA shell changed: status engine cache registration missing'
+          p.write_text(s.replace(old,new))
+          PY
+          node --check _site/js/status-engine-043.js
+          node --check _site/js/competition-1018.js
+          node runtime/verify-043.cjs _site
+          grep -q 'js/status-engine-043.js?v=0.4.3' _site/game.html
+          grep -q 'we-wolf-god-pwa-alpha-0.4.3-v1' _site/sw.js
+          cat > _site/pwa-version.json <<'JSON'
+          {"name":"WE狼殺上帝","channel":"PWA","version":"0.4.3","build":"1018-status-and-generic-mechanical-voice","features":["authoritative-night-status","mechanical-copy-target-and-role-status","night-action-tags","generic-mechanical-skill-voice","sheriff-3-second-light-instruction","voice-source-consistency-diagnostics","session-delete"]}
+          JSON
+
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
